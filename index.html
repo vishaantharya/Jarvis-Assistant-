@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>JARVIS · voice assistant</title>
+  <!-- Font & Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* ----- reset & base ----- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: #0b0d15;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      margin: 0;
+    }
+
+    /* main card – mobile first */
+    .jarvis-card {
+      width: 100%;
+      max-width: 400px;
+      background: linear-gradient(145deg, #141824 0%, #1a1f2e 100%);
+      border-radius: 48px 48px 32px 32px;
+      padding: 28px 20px 32px;
+      box-shadow: 0 25px 50px -8px rgba(0, 0, 0, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      transition: all 0.2s ease;
+      backdrop-filter: blur(2px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* subtle glow ring */
+    .jarvis-card::before {
+      content: '';
+      position: absolute;
+      top: -60%;
+      left: -30%;
+      width: 160%;
+      height: 160%;
+      background: radial-gradient(circle at 30% 20%, rgba(0, 180, 255, 0.04), transparent 60%);
+      pointer-events: none;
+    }
+
+    /* ----- header ----- */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .icon-jarvis {
+      font-size: 28px;
+      color: #3b8cff;
+      filter: drop-shadow(0 0 8px rgba(59, 140, 255, 0.3));
+      background: rgba(59, 140, 255, 0.08);
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 18px;
+      border: 1px solid rgba(59, 140, 255, 0.15);
+    }
+
+    .logo-text {
+      font-weight: 600;
+      font-size: 22px;
+      letter-spacing: 0.5px;
+      background: linear-gradient(135deg, #e0eaff, #a0c4ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .status-badge {
+      background: rgba(59, 140, 255, 0.12);
+      padding: 8px 14px;
+      border-radius: 40px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #8bb6ff;
+      border: 1px solid rgba(59, 140, 255, 0.15);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      letter-spacing: 0.3px;
+    }
+
+    .status-badge i {
+      font-size: 10px;
+      color: #5cffb0;
+    }
+
+    /* ----- visual core (circle / avatar) ----- */
+    .assistant-visual {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 16px 0 20px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .ring-container {
+      position: relative;
+      width: 150px;
+      height: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pulse-ring {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 1.5px solid rgba(59, 140, 255, 0.15);
+      animation: pulse-ring 3s ease-in-out infinite;
+    }
+
+    .pulse-ring:nth-child(2) {
+      animation-delay: 1s;
+      border-color: rgba(59, 140, 255, 0.08);
+      width: 130%;
+      height: 130%;
+    }
+
+    .pulse-ring:nth-child(3) {
+      animation-delay: 2s;
+      border-color: rgba(59, 140, 255, 0.05);
+      width: 160%;
+      height: 160%;
+    }
+
+    @keyframes pulse-ring {
+      0% { transform: scale(0.9); opacity: 0.2; }
+      50% { transform: scale(1.2); opacity: 0.6; }
+      100% { transform: scale(0.9); opacity: 0.2; }
+    }
+
+    .avatar-circle {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 25%, #28314f, #0e121f);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 40px rgba(59, 140, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      z-index: 5;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .avatar-circle i {
+      font-size: 64px;
+      color: #b8d4ff;
+      text-shadow: 0 0 25px rgba(59, 140, 255, 0.4);
+      transition: all 0.25s ease;
+    }
+
+    .avatar-circle.listening i {
+      color: #5cffb0;
+      text-shadow: 0 0 40px #5cffb0;
+      animation: listening-glow 1.2s ease-in-out infinite alternate;
+    }
+
+    @keyframes listening-glow {
+      0% { transform: scale(1); opacity: 0.8; }
+      100% { transform: scale(1.08); opacity: 1; }
+    }
+
+    .assistant-status {
+      margin-top: 16px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #9bb6e5;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 6px 22px;
+      border-radius: 50px;
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255, 255, 255, 0.02);
+      letter-spacing: 0.3px;
+      transition: all 0.25s ease;
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .assistant-status i {
+      font-size: 12px;
+      color: #5cffb0;
+    }
+
+    /* ----- conversation log ----- */
+    .conversation-box {
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 28px;
+      padding: 18px 16px;
+      margin: 16px 0 20px;
+      max-height: 200px;
+      min-height: 100px;
+      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(4px);
+      box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.3);
+      scroll-behavior: smooth;
+      position: relative;
+      z-index: 2;
+    }
+
+    .conversation-box::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .conversation-box::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .conversation-box::-webkit-scrollbar-thumb {
+      background: #3b8cff50;
+      border-radius: 10px;
+    }
+
+    .message {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 14px;
+      animation: fade-in 0.2s ease;
+    }
+
+    .message:last-child {
+      margin-bottom: 0;
+    }
+
+    @keyframes fade-in {
+      0% { opacity: 0; transform: translateY(8px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .message .msg-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 13px;
+      background: rgba(59, 140, 255, 0.08);
+      color: #8bb6ff;
+      border: 1px solid rgba(59, 140, 255, 0.08);
+    }
+
+    .message.user .msg-icon {
+      background: rgba(255, 255, 255, 0.04);
+      color: #b0caf5;
+      border-color: rgba(255, 255, 255, 0.04);
+    }
+
+    .message .msg-content {
+      background: rgba(255, 255, 255, 0.02);
+      padding: 10px 14px;
+      border-radius: 18px 18px 18px 4px;
+      font-size: 15px;
+      line-height: 1.5;
+      color: #d6e3ff;
+      word-break: break-word;
+      border: 1px solid rgba(255, 255, 255, 0.02);
+      flex: 1;
+    }
+
+    .message.user .msg-content {
+      background: rgba(59, 140, 255, 0.06);
+      border-radius: 18px 18px 4px 18px;
+      border-color: rgba(59, 140, 255, 0.05);
+      color: #eef4ff;
+    }
+
+    .message.assistant .msg-content {
+      border-left: 2px solid #3b8cff40;
+    }
+
+    .empty-chat {
+      color: #4e6085;
+      text-align: center;
+      font-size: 14px;
+      padding: 10px 0;
+      letter-spacing: 0.2px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .empty-chat i {
+      font-size: 28px;
+      opacity: 0.3;
+      margin-bottom: 4px;
+    }
+
+    /* ----- controls ----- */
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      margin-top: 12px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .btn-voice {
+      background: linear-gradient(145deg, #1f2842, #151b2c);
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: none;
+      color: #b8d4ff;
+      font-size: 36px;
+      box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.8), inset 0 -3px 0 rgba(255, 255, 255, 0.02);
+      transition: all 0.15s ease;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.02);
+      position: relative;
+    }
+
+    .btn-voice:active {
+      transform: scale(0.92);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.9);
+    }
+
+    .btn-voice.listening {
+      background: linear-gradient(145deg, #1f3a4a, #14222e);
+      color: #5cffb0;
+      box-shadow: 0 0 40px rgba(92, 255, 176, 0.15), 0 12px 28px -4px rgba(0, 0, 0, 0.8);
+      border-color: #5cffb030;
+    }
+
+    .btn-voice i {
+      filter: drop-shadow(0 0 6px currentColor);
+    }
+
+    .btn-clear {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      color: #6b7fa5;
+      width: 48px;
+      height: 48px;
+      border-radius: 30px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-clear:active {
+      background: rgba(255, 255, 255, 0.05);
+      transform: scale(0.92);
+    }
+
+    .btn-clear i {
+      filter: drop-shadow(0 0 2px rgba(0,0,0,0.3));
+    }
+
+    /* small footer */
+    .footer-meta {
+      display: flex;
+      justify-content: center;
+      margin-top: 22px;
+      font-size: 11px;
+      color: #3f4b66;
+      letter-spacing: 0.3px;
+      gap: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.02);
+      padding-top: 18px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .footer-meta span i {
+      margin-right: 4px;
+      font-size: 10px;
+    }
+
+    /* responsiveness */
+    @media (max-width: 420px) {
+      .jarvis-card { padding: 20px 16px 24px; border-radius: 32px; }
+      .avatar-circle { width: 90px; height: 90px; }
+      .avatar-circle i { font-size: 48px; }
+      .ring-container { width: 130px; height: 130px; }
+      .btn-voice { width: 70px; height: 70px; font-size: 30px; }
+      .conversation-box { max-height: 150px; min-height: 80px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="jarvis-card" role="main">
+  <!-- header -->
+  <div class="header">
+    <div class="logo-area">
+      <div class="icon-jarvis"><i class="fas fa-microchip"></i></div>
+      <span class="logo-text">JARVIS</span>
+    </div>
+    <div class="status-badge" id="statusBadge">
+      <i class="fas fa-circle"></i> active
+    </div>
+  </div>
+
+  <!-- visual -->
+  <div class="assistant-visual">
+    <div class="ring-container">
+      <div class="pulse-ring"></div>
+      <div class="pulse-ring"></div>
+      <div class="pulse-ring"></div>
+      <div class="avatar-circle" id="avatarCircle">
+        <i class="fas fa-robot" id="avatarIcon"></i>
+      </div>
+    </div>
+    <div class="assistant-status" id="statusText">
+      <i class="fas fa-circle" style="font-size: 8px; color: #5cffb0;"></i> ready
+    </div>
+  </div>
+
+  <!-- conversation -->
+  <div class="conversation-box" id="conversationBox">
+    <div class="empty-chat" id="emptyChat">
+      <i class="fas fa-comment-dots"></i>
+      <span>tap the mic & speak</span>
+    </div>
+    <!-- dynamic messages inserted here -->
+  </div>
+
+  <!-- controls -->
+  <div class="controls">
+    <button class="btn-clear" id="clearBtn" aria-label="clear chat">
+      <i class="fas fa-eraser"></i>
+    </button>
+    <button class="btn-voice" id="voiceBtn" aria-label="voice input">
+      <i class="fas fa-microphone"></i>
+    </button>
+    <button class="btn-clear" id="helpBtn" aria-label="help">
+      <i class="fas fa-question"></i>
+    </button>
+  </div>
+
+  <div class="footer-meta">
+    <span><i class="fas fa-wifi"></i> online</span>
+    <span><i class="fas fa-bolt"></i> v2.6</span>
+  </div>
+</div>
+
+<script>
+  (function() {
+    "use strict";
+
+    // ----- DOM refs -----
+    const voiceBtn = document.getElementById('voiceBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const helpBtn = document.getElementById('helpBtn');
+    const conversationBox = document.getElementById('conversationBox');
+    const emptyChat = document.getElementById('emptyChat');
+    const statusText = document.getElementById('statusText');
+    const avatarCircle = document.getElementById('avatarCircle');
+    const avatarIcon = document.getElementById('avatarIcon');
+    const statusBadge = document.getElementById('statusBadge');
+
+    // ----- state -----
+    let isListening = false;
+    let recognition = null;
+    let messages = [];
+
+    // ----- helpers -----
+    function updateEmptyState() {
+      if (messages.length === 0) {
+        emptyChat.style.display = 'flex';
+      } else {
+        emptyChat.style.display = 'none';
+      }
+    }
+
+    function renderMessages() {
+      // clear all children except emptyChat
+      const children = conversationBox.children;
+      for (let i = children.length - 1; i >= 0; i--) {
+        if (children[i].id !== 'emptyChat') {
+          conversationBox.removeChild(children[i]);
+        }
+      }
+      // re-add messages
+      messages.forEach(msg => {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${msg.role}`;
+        msgDiv.innerHTML = `
+          <div class="msg-icon"><i class="fas ${msg.role === 'user' ? 'fa-user' : 'fa-robot'}"></i></div>
+          <div class="msg-content">${msg.text}</div>
+        `;
+        conversationBox.appendChild(msgDiv);
+      });
+      updateEmptyState();
+      // scroll to bottom
+      conversationBox.scrollTop = conversationBox.scrollHeight;
+    }
+
+    function addMessage(role, text) {
+      messages.push({ role, text });
+      renderMessages();
+    }
+
+    // Simulated AI response (Jarvis style)
+    function generateJarvisReply(userText) {
+      const lower = userText.toLowerCase();
+      let reply = '';
+      if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
+        reply = 'Good day, sir. How may I assist you?';
+      } else if (lower.includes('weather')) {
+        reply = 'I am picking up clear skies with a high of 22°C. Perfect for outdoor operations.';
+      } else if (lower.includes('time') || lower.includes('clock')) {
+        const now = new Date();
+        reply = `The current time is ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}.`;
+      } else if (lower.includes('thank')) {
+        reply = 'Always at your service, sir.';
+      } else if (lower.includes('help') || lower.includes('what can you do')) {
+        reply = 'I can answer questions, tell the time, give weather updates, and more. Just speak naturally.';
+      } else if (lower.includes('jarvis') || lower.includes('yourself')) {
+        reply = 'I am JARVIS, your AI assistant. Ready for your command.';
+      } else if (lower.trim().length === 0) {
+        reply = 'I didn\'t catch that, sir. Please try again.';
+      } else {
+        reply = `Processing your request: "${userText}". I will have a full analysis shortly.`;
+      }
+      return reply;
+    }
+
+    // ----- voice recognition -----
+    function initSpeech() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        statusText.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #ffb347;"></i> speech not supported';
+        voiceBtn.disabled = true;
+        voiceBtn.style.opacity = '0.5';
+        return null;
+      }
+
+      const rec = new SpeechRecognition();
+      rec.lang = 'en-US';
+      rec.continuous = false;
+      rec.interimResults = false;
+      rec.maxAlternatives = 1;
+
+      rec.onstart = function() {
+        isListening = true;
+        voiceBtn.classList.add('listening');
+        avatarCircle.classList.add('listening');
+        avatarIcon.className = 'fas fa-circle'; // change icon to pulse-like
+        statusText.innerHTML = '<i class="fas fa-circle" style="color: #5cffb0; animation: pulse 0.8s infinite;"></i> listening...';
+        statusBadge.innerHTML = '<i class="fas fa-circle" style="color: #5cffb0;"></i> listening';
+        voiceBtn.innerHTML = '<i class="fas fa-stop"></i>';
+      };
+
+      rec.onerror = function(event) {
+        console.warn('Speech error:', event.error);
+        let errorMsg = 'mic error';
+        if (event.error === 'not-allowed') errorMsg = 'permission denied';
+        else if (event.error === 'no-speech') errorMsg = 'no speech detected';
+        statusText.innerHTML = `<i class="fas fa-exclamation-circle" style="color: #ff8a8a;"></i> ${errorMsg}`;
+        resetUI();
+      };
+
+      rec.onend = function() {
+        resetUI();
+        // if no result was captured, we remain in ready state
+      };
+
+      rec.onresult = function(event) {
+        const last = event.results.length - 1;
+        const transcript = event.results[last][0].transcript.trim();
+        if (transcript.length === 0) {
+          statusText.innerHTML = '<i class="fas fa-circle" style="color: #5cffb0;"></i> ready';
+          return;
+        }
+
+        // user message
+        addMessage('user', transcript);
+
+        // generate assistant reply
+        const reply = generateJarvisReply(transcript);
+        // simulate typing / small delay
+        statusText.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> thinking...';
+        setTimeout(() => {
+          addMessage('assistant', reply);
+          statusText.innerHTML = '<i class="fas fa-circle" style="color: #5cffb0;"></i> ready';
+          // speak reply (optional, but adds Jarvis feel)
+          if (window.speechSynthesis) {
+            const utterance = new SpeechSynthesisUtterance(reply);
+            utterance.voice = speechSynthesis.getVoices().find(v => v.lang.startsWith('en')) || null;
+            utterance.rate = 0.9;
+            utterance.pitch = 1.1;
+            speechSynthesis.speak(utterance);
+          }
+        }, 300 + Math.random() * 400);
+      };
+
+      return rec;
+    }
+
+    function resetUI() {
+      isListening = false;
+      voiceBtn.classList.remove('listening');
+      avatarCircle.classList.remove('listening');
+      avatarIcon.className = 'fas fa-robot';
+      voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+      if (statusText.innerHTML.includes('listening') || statusText.innerHTML.includes('thinking')) {
+        statusText.innerHTML = '<i class="fas fa-circle" style="color: #5cffb0;"></i> ready';
+      }
+      statusBadge.innerHTML = '<i class="fas fa-circle"></i> active';
+    }
+
+    // toggle voice
+    function toggleVoice() {
+      if (!recognition) {
+        recognition = initSpeech();
+        if (!recognition) return;
+      }
+
+      if (isListening) {
+        recognition.stop();
+        resetUI();
+        return;
+      }
+
+      try {
+        recognition.start();
+      } catch (e) {
+        // sometimes start throws if already started, recover
+        if (e.name === 'InvalidStateError') {
+          recognition.stop();
+          setTimeout(() => recognition.start(), 100);
+        } else {
+          console.warn('start error', e);
+          statusText.innerHTML = '<i class="fas fa-exclamation-circle"></i> error restarting';
+        }
+      }
+    }
+
+    // ----- clear chat -----
+    function clearChat() {
+      if (messages.length === 0) return;
+      messages = [];
+      renderMessages();
+      // cancel any speaking
+      if (window.speechSynthesis) speechSynthesis.cancel();
+      statusText.innerHTML = '<i class="fas fa-circle" style="color: #5cffb0;"></i> ready';
+      if (isListening) {
+        if (recognition) recognition.stop();
+        resetUI();
+      }
+    }
+
+    // ----- help (quick demo) -----
+    function showHelp() {
+      if (messages.length > 0 && messages[messages.length-1].role === 'assistant' && 
+          messages[messages.length-1].text.includes('I can answer')) {
+        // avoid spamming
+        return;
+      }
+      addMessage('user', 'help');
+      const reply = 'I can answer questions, tell time, give weather updates, and more. Just say "hello" or ask about the weather.';
+      setTimeout(() => {
+        addMessage('assistant', reply);
+        if (window.speechSynthesis) {
+          const utterance = new SpeechSynthesisUtterance(reply);
+          utterance.rate = 0.9;
+          utterance.pitch = 1.1;
+          speechSynthesis.speak(utterance);
+        }
+      }, 200);
+    }
+
+    // ----- event binding -----
+    voiceBtn.addEventListener('click', toggleVoice);
+    clearBtn.addEventListener('click', clearChat);
+    helpBtn.addEventListener('click', showHelp);
+
+    // prefill a welcome message (without triggering voice)
+    setTimeout(() => {
+      addMessage('assistant', 'JARVIS online. How can I help you today?');
+    }, 300);
+
+    // clean speech synthesis on page unload
+    window.addEventListener('beforeunload', function() {
+      if (window.speechSynthesis) speechSynthesis.cancel();
+      if (recognition && isListening) recognition.stop();
+    });
+
+    // handle visibility change to avoid stuck listening
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden && isListening) {
+        if (recognition) recognition.stop();
+        resetUI();
+      }
+    });
+
+  })();
+</script>
+</body>
+</html>
